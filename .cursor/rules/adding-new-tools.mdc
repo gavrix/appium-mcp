@@ -1,0 +1,112 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# How to Add a New Tool
+
+Adding a new tool to this Appium MCP server involves following the established pattern. Here's a step-by-step guide:
+
+1.  **Create a New Tool File**:
+    *   In the `tools/` directory, create a new JavaScript file named `create<YourToolName>Tool.js` (e.g., `createMyNewToolTool.js`). The `<YourToolName>` should be in CamelCase.
+
+2.  **Define JSDoc Typedefs**:
+    *   At the top of your new file, include JSDoc typedefs for `SharedState` and `ToolDependencies` that your tool will need. You can often copy and adapt these from existing tool files like `[tools/tapElement.js](mdc:tools/tapElement.js)`.
+    *   Ensure you only include the properties from `SharedState` (e.g., `appiumDriver`, `deviceLogProcess`) and `ToolDependencies` (e.g., `logToFile`, `zod`, `fsPromises`) that your tool specifically requires.
+    *   Example for `ToolDependencies` if your tool uses `logToFile` and `zod` for its schema:
+        ```javascript
+        /**
+         * @typedef {object} ToolDependencies
+         * @property {function(string, ...any): void} logToFile
+         * @property {import('zod').z} zod
+         */
+        ```
+
+3.  **Create the Factory Function**:
+    *   Export a function named `create<YourToolName>Tool`.
+    *   This function must accept two arguments: `sharedState` and `dependencies`.
+    *   Destructure the required functions/variables from `dependencies` (and `sharedState` if accessed directly, though typically `sharedState.appiumDriver` etc. is used in the handler).
+
+4.  **Return the Tool Definition Object**:
+    *   The factory function should return an object with the following properties:
+        *   `name` (string): The snake_case name for your tool (e.g., `"my_new_tool"`). This is how the MCP client will call the tool.
+        *   `description` (string): A clear, concise description of what the tool does.
+        *   `schema` (object): A Zod schema object defining the arguments your tool expects.
+            *   Use the `zod` instance passed in via `dependencies` (e.g., `const { zod: z } = dependencies;`).
+            *   Example: `{ myArgument: z.string().describe("Description of my argument.") }`.
+            *   If your tool takes no arguments, use `{}`.
+        *   `handler` (async function): An asynchronous function that implements the tool's logic.
+            *   It will receive an object containing the parsed arguments as defined in your `schema` (e.g., `async ({ myArgument }) => { ... }`).
+            *   This handler has access to `sharedState` (e.g., `sharedState.appiumDriver`) and the destructured `dependencies` (e.g., `logToFile`) due to the closure.
+            *   The handler should return an MCP-compliant response, usually `{ content: [{ type: "text", text: "Your result message" }] }`.
+
+5.  **Implement Tool Logic in the Handler**:
+    *   Write the core logic of your tool within the `handler` function.
+    *   Always check if `sharedState.appiumDriver` is active before attempting Appium commands.
+    *   Use `logToFile` for logging.
+    *   Handle errors gracefully and return informative error messages.
+
+6.  **Register the Tool in `[server.js](mdc:server.js)`**:
+    *   Open `[server.js](mdc:server.js)`.
+    *   Import your new factory function at the top:
+        ```javascript
+        import { create<YourToolName>Tool } from './tools/create<YourToolName>Tool.js';
+        ```
+    *   Add a call to your factory function within the `toolDefinitions` array, passing `sharedState` and `toolDependencies`:
+        ```javascript
+        const toolDefinitions = [
+          // ... existing tools ...
+          create<YourToolName>Tool(sharedState, toolDependencies),
+        ];
+        ```
+
+**Example Snippet for a new tool file (`tools/createMyNewToolTool.js`):**
+
+```javascript
+/**
+ * @typedef {import('webdriverio').RemoteClient} WebdriverIoClient
+ * @typedef {object} SharedState
+ * @property {WebdriverIoClient | null} appiumDriver
+ */
+/**
+ * @typedef {object} ToolDependencies
+ * @property {function(string, ...any): void} logToFile
+ * @property {import('zod').z} zod
+ */
+
+/**
+ * Creates the definition for the "my_new_tool" tool.
+ * This is a sample tool description.
+ *
+ * @param {SharedState} sharedState
+ * @param {ToolDependencies} dependencies
+ * @returns {{name: string, description: string, schema: object, handler: function(any): Promise<object>}}
+ */
+export function createMyNewToolTool(sharedState, dependencies) {
+  const { logToFile, zod: z } = dependencies;
+
+  return {
+    name: "my_new_tool",
+    description: "This tool does something new and exciting.",
+    schema: {
+      customArgument: z.string().describe("A custom argument for this new tool.")
+    },
+    handler: async ({ customArgument }) => {
+      if (!sharedState.appiumDriver) {
+        return { content: [{ type: "text", text: "Error: Appium session not active." }] };
+      }
+      try {
+        logToFile(`[my_new_tool] Executing with argument: ${customArgument}`);
+        // ... Your Appium logic here ...
+        const result = `Tool executed successfully with ${customArgument}`;
+        return { content: [{ type: "text", text: result }] };
+      } catch (error) {
+        logToFile(`[my_new_tool] Error: ${error.message}`, error.stack);
+        return { content: [{ type: "text", text: `Error in my_new_tool: ${error.message}` }] };
+      }
+    }
+  };
+}
+```
+
+Remember to test your new tool thoroughly.

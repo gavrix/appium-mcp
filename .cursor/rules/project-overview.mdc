@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Overview
+
+This project implements an Appium MCP (Model-Context-Protocol) server. Its main purpose is to expose Appium's mobile automation capabilities as a set of tools that can be consumed by an MCP client.
+
+The server allows for controlling and interacting with iOS simulators (and potentially Android devices in the future) through a standardized protocol.
+
+The main entry point for the server application is `[server.js](mdc:server.js)`.
