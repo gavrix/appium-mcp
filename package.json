@@ -1,15 +1,34 @@
 {
   "name": "appium-mcp",
-  "version": "1.0.0",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
+  "version": "0.1.0",
+  "description": "An Appium MCP (Model-Context-Protocol) server that exposes mobile automation capabilities (iOS simulators, with potential Android support) as tools for MCP clients. Enables standardized control and interaction with mobile devices.",
+  "author": "Sergey Gavrilyuk <sergey.gavrilyuk@gmail.com>",
   "license": "ISC",
-  "description": "",
+  "type": "module",
+  "main": "server.js",
+  "bin": {
+    "appium-mcp": "./server.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "appium",
+    "mcp",
+    "mobile",
+    "automation",
+    "testing",
+    "ios"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gavrix/appium-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gavrix/appium-mcp/issues"
+  },
+  "homepage": "https://github.com/gavrix/appium-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
     "webdriverio": "^9.14.0"
