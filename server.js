@@ -22,6 +22,7 @@ import { createGetDeviceLogsTool } from './tools/getDeviceLogs.js';
 import { createSimulateGestureTool } from './tools/simulateGesture.js';
 import { createEndSessionTool } from './tools/endSession.js';
 import { createEnterTextTool } from './tools/enterTextTool.js';
+import { createGetElementTextTool } from './tools/getElementText.js';
 
 // --- Log file setup ---
 const __filename_esm = fileURLToPath(import.meta.url); // ESM equivalent of __filename
@@ -101,6 +102,7 @@ async function main() {
     createFindElementTool(sharedState, toolDependencies),
     createTapElementTool(sharedState, toolDependencies),
     createEnterTextTool(sharedState, toolDependencies),
+    createGetElementTextTool(sharedState, toolDependencies),
     createGetScreenshotTool(sharedState, toolDependencies),
     createGetDeviceLogsTool(sharedState, toolDependencies),
     createSimulateGestureTool(sharedState, toolDependencies),
