@@ -19,6 +19,7 @@
 /**
  * Creates the definition for the "enter_text" tool.
  * Enters text into a specific element, like an input field.
+ * This is equivalent to clearing the field and then typing into it.
  *
  * @param {SharedState} sharedState - An object to manage shared state like appiumDriver.
  * @param {ToolDependencies} dependencies - An object containing dependencies like logToFile and zod.
@@ -29,7 +30,7 @@ export function createEnterTextTool(sharedState, dependencies) {
 
   return {
     name: "enter_text",
-    description: "Enters text into an element identified by its unique element ID (e.g., an input field).",
+    description: "Sets the value of an element, clearing its contents first (e.g., an input field).",
     schema: {
       elementId: z.string().describe("The ID of the element to enter text into (obtained from find_element)."),
       text: z.string().describe("The text to enter into the element."),
@@ -46,14 +47,17 @@ export function createEnterTextTool(sharedState, dependencies) {
       }
 
       try {
-        logToFile(`[enter_text] Attempting to enter text into element with ID \'${elementId}\'`);
+        logToFile(`[enter_text] Attempting to set value for element with ID \'${elementId}\'`);
+        // Implement "setValue" by clearing the element first, then sending keys.
+        // @ts-ignore elementClear is a valid command
+        await sharedState.appiumDriver.elementClear(elementId);
         // @ts-ignore elementSendKeys is a valid command
         await sharedState.appiumDriver.elementSendKeys(elementId, text);
-        logToFile(`[enter_text] Text entered into element with ID \'${elementId}\' successfully.`);
-        return { content: [{ type: "text", text: `Text entered into element with ID \'${elementId}\' successfully.` }] };
+        logToFile(`[enter_text] Value set for element with ID \'${elementId}\' successfully.`);
+        return { content: [{ type: "text", text: `Value set for element with ID \'${elementId}\' successfully.` }] };
       } catch (error) {
-        logToFile(`[enter_text] Error entering text into element with ID \'${elementId}\': ${error.message}`, error.stack);
-        return { content: [{ type: "text", text: `Error entering text into element with ID \'${elementId}\': ${error.message}` }] };
+        logToFile(`[enter_text] Error setting value for element with ID \'${elementId}\': ${error.message}`, error.stack);
+        return { content: [{ type: "text", text: `Error setting value for element with ID \'${elementId}\': ${error.message}` }] };
       }
     }
   };
