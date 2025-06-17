@@ -18,6 +18,7 @@ import { createGetPageSourceTool } from './tools/getPageSource.js';
 import { createFindElementTool } from './tools/findElement.js';
 import { createTapElementTool } from './tools/tapElement.js';
 import { createGetScreenshotTool } from './tools/getScreenshot.js';
+import { createGetScreenshotFileTool } from './tools/getScreenshotFile.js';
 import { createGetDeviceLogsTool } from './tools/getDeviceLogs.js';
 import { createSimulateGestureTool } from './tools/simulateGesture.js';
 import { createEndSessionTool } from './tools/endSession.js';
@@ -104,6 +105,7 @@ async function main() {
     createEnterTextTool(sharedState, toolDependencies),
     createGetElementTextTool(sharedState, toolDependencies),
     createGetScreenshotTool(sharedState, toolDependencies),
+    createGetScreenshotFileTool(sharedState, toolDependencies),
     createGetDeviceLogsTool(sharedState, toolDependencies),
     createSimulateGestureTool(sharedState, toolDependencies),
     createEndSessionTool(sharedState, toolDependencies),
