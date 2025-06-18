@@ -24,6 +24,7 @@ import { createSimulateGestureTool } from './tools/simulateGesture.js';
 import { createEndSessionTool } from './tools/endSession.js';
 import { createEnterTextTool } from './tools/enterTextTool.js';
 import { createGetElementTextTool } from './tools/getElementText.js';
+import { createPressHomeButtonTool } from './tools/pressHomeButton.js';
 
 // --- Log file setup ---
 const __filename_esm = fileURLToPath(import.meta.url); // ESM equivalent of __filename
@@ -109,6 +110,7 @@ async function main() {
     createGetDeviceLogsTool(sharedState, toolDependencies),
     createSimulateGestureTool(sharedState, toolDependencies),
     createEndSessionTool(sharedState, toolDependencies),
+    createPressHomeButtonTool(sharedState, toolDependencies),
   ];
 
   // Register tools with the server
@@ -171,6 +173,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  logToFile("Unhandled error in main:", error);
+  logToFile("Unhandled error in main:", error.message, error.stack);
   process.exit(1);
 }); 

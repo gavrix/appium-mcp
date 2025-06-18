@@ -18,7 +18,7 @@
 
 /**
  * Creates the definition for the "simulate_gesture" tool.
- * Simulates a custom gesture on the device using WebdriverIO's performActions method (W3C Actions API).
+ * Simulates a custom gesture using normalized [0, 1] coordinates. The gestureDescription argument is a JSON string of W3C action sequences. All 'x' and 'y' coordinates for 'pointerMove' actions MUST be provided as normalized values between 0.0 and 1.0. The tool automatically converts these to absolute pixel coordinates based on the device's screen size. For relative moves (origin: 'pointer'), the delta is also normalized. Example of a right-to-left swipe across 80% of the screen width: '[{\"type\":\"pointer\", \"id\":\"finger1\", \"parameters\":{\"pointerType\":\"touch\"}, \"actions\":[{\"type\":\"pointerMove\",\"duration\":0,\"x\":0.9,\"y\":0.5}, {\"type\":\"pointerDown\",\"button\":0}, {\"type\":\"pause\",\"duration\":200}, {\"type\":\"pointerMove\",\"duration\":500,\"origin\":\"pointer\",\"x\":-0.8,\"y\":0}, {\"type\":\"pointerUp\",\"button\":0}]}]'.",
  *
  * @param {SharedState} sharedState - An object to manage shared state like appiumDriver.
  * @param {ToolDependencies} dependencies - An object containing dependencies like logToFile and zod.
@@ -29,9 +29,9 @@ export function createSimulateGestureTool(sharedState, dependencies) {
 
   return {
     name: "simulate_gesture",
-    description: "Simulates a custom gesture on the device using WebdriverIO's performActions method (W3C Actions API). The gestureDescription argument must be a JSON string representing an array of action sequences. Each sequence defines an input source (e.g., a finger touch) and its series of actions. Example structure: '[{\"type\":\"pointer\", \"id\":\"finger1\", \"parameters\":{\"pointerType\":\"touch\"}, \"actions\":[{\"type\":\"pointerMove\",\"duration\":0,\"x\":100,\"y\":100}, {\"type\":\"pointerDown\",\"button\":0}, {\"type\":\"pause\",\"duration\":200}, {\"type\":\"pointerMove\",\"duration\":500,\"origin\":\"pointer\",\"x\":100,\"y\":300}, {\"type\":\"pointerUp\",\"button\":0}]}]'. Refer to W3C WebDriver Actions API and Appium/WebdriverIO documentation for 'performActions' for detailed structure and available action types.",
+    description: "Simulates a custom gesture using normalized [0, 1] coordinates. The gestureDescription argument is a JSON string of W3C action sequences. All 'x' and 'y' coordinates for 'pointerMove' actions MUST be provided as normalized values between 0.0 and 1.0. The tool automatically converts these to absolute pixel coordinates based on the device's screen size. For relative moves (origin: 'pointer'), the delta is also normalized. Example of a right-to-left swipe across 80% of the screen width: '[{\"type\":\"pointer\", \"id\":\"finger1\", \"parameters\":{\"pointerType\":\"touch\"}, \"actions\":[{\"type\":\"pointerMove\",\"duration\":0,\"x\":0.9,\"y\":0.5}, {\"type\":\"pointerDown\",\"button\":0}, {\"type\":\"pause\",\"duration\":200}, {\"type\":\"pointerMove\",\"duration\":500,\"origin\":\"pointer\",\"x\":-0.8,\"y\":0}, {\"type\":\"pointerUp\",\"button\":0}]}]'.",
     schema: { 
-      gestureDescription: z.string().describe("A JSON string for W3C actions: an array of action sequences. Each sequence has 'type', 'id', 'parameters', and an 'actions' array (e.g., pointerMove, pointerDown, pause, pointerUp). Example: '[{\"type\":\"pointer\",\"id\":\"f1\",\"parameters\":{\"pointerType\":\"touch\"},\"actions\":[{\"type\":\"pointerMove\",\"x\":10,\"y\":10},{\"type\":\"pointerDown\"},{\"type\":\"pointerUp\"}]}]'")
+      gestureDescription: z.string().describe("A JSON string for W3C actions using normalized [0, 1] coordinates for all 'pointerMove' actions. Example: '[{\"type\":\"pointer\",\"id\":\"f1\",\"actions\":[{\"type\":\"pointerMove\",\"x\":0.9,\"y\":0.5},{\"type\":\"pointerDown\"},{\"type\":\"pointerMove\",\"origin\":\"pointer\",\"x\":-0.8,\"y\":0},{\"type\":\"pointerUp\"}]}]'")
     },
     handler: async ({ gestureDescription }) => {
       if (!sharedState.appiumDriver) {
@@ -41,17 +41,13 @@ export function createSimulateGestureTool(sharedState, dependencies) {
         return { content: [{ type: "text", text: "Error: gestureDescription was not provided."}] };
       }
 
+      logToFile(`[simulate_gesture] Received raw gestureDescription: ${gestureDescription}`);
+
       let parsedActionSequences;
       try {
         parsedActionSequences = JSON.parse(gestureDescription);
         if (!Array.isArray(parsedActionSequences)) {
           throw new Error("gestureDescription must be a JSON array of action sequences.");
-        }
-        if (parsedActionSequences.length > 0) {
-          const firstSequence = parsedActionSequences[0];
-          if (typeof firstSequence.type === 'undefined' || typeof firstSequence.id === 'undefined' || typeof firstSequence.actions === 'undefined') {
-            logToFile('[simulate_gesture] Warning: Parsed gestureDescription might not follow the expected W3C performActions structure (missing type, id, or actions array in the first sequence).', JSON.stringify(parsedActionSequences, null, 2));
-          }
         }
       } catch (parseError) {
         logToFile('[simulate_gesture] Error parsing gestureDescription JSON for performActions:', parseError.message);
@@ -59,10 +55,33 @@ export function createSimulateGestureTool(sharedState, dependencies) {
       }
 
       try {
-        logToFile(`[simulate_gesture] Attempting to perform W3C actions with: ${JSON.stringify(parsedActionSequences)}`);
+        const { width, height } = await sharedState.appiumDriver.getWindowSize();
+        logToFile(`[simulate_gesture] Normalizing coordinates based on screen size: ${width}x${height}`);
+
+        // Deep clone the structure to avoid modifying the original input object.
+        const recalculatedSequences = JSON.parse(JSON.stringify(parsedActionSequences));
+
+        recalculatedSequences.forEach(sequence => {
+          if (sequence.type === 'pointer' && Array.isArray(sequence.actions)) {
+            sequence.actions.forEach(action => {
+              if (action.type === 'pointerMove') {
+                if (typeof action.x === 'number') {
+                  logToFile(`[simulate_gesture] Normalizing x: ${action.x} to ${Math.round(action.x * width)}`);
+                  action.x = Math.round(action.x * width);
+                }
+                if (typeof action.y === 'number') {
+                  logToFile(`[simulate_gesture] Normalizing y: ${action.y} to ${Math.round(action.y * height)}`);
+                  action.y = Math.round(action.y * height);
+                }
+              }
+            });
+          }
+        });
+        
+        logToFile(`[simulate_gesture] Attempting to perform W3C actions with recalculated coordinates: ${JSON.stringify(recalculatedSequences)}`);
         
         // @ts-ignore performActions is a valid command
-        await sharedState.appiumDriver.performActions(parsedActionSequences);
+        await sharedState.appiumDriver.performActions(recalculatedSequences);
         
         logToFile(`[simulate_gesture] W3C actions performed successfully.`);
         return { content: [{ type: "text", text: "Gesture (W3C actions) performed successfully." }] };
