@@ -8,6 +8,8 @@
  * @typedef {object} SharedState
  * @property {WebdriverIoClient | null} appiumDriver
  * @property {ChildProcess | null} deviceLogProcess
+ * @property {string | null} currentPlatform - 'ios' | 'android' | null
+ * @property {object | null} currentDevice - Device info object
  */
 
 /**
@@ -33,28 +35,33 @@ export function createEndSessionTool(sharedState, dependencies) {
     handler: async () => {
       if (sharedState.appiumDriver) {
         try {
-          logToFile('[end_session] Attempting to delete Appium session.');
+          const platformName = sharedState.currentPlatform || 'device';
+          logToFile(`[end_session] Attempting to delete ${platformName} Appium session.`);
           // @ts-ignore deleteSession is a valid command
           await sharedState.appiumDriver.deleteSession();
           sharedState.appiumDriver = null;
-          logToFile('[end_session] Appium session deleted successfully.');
+          sharedState.currentPlatform = null;
+          sharedState.currentDevice = null;
+          logToFile(`[end_session] ${platformName} Appium session deleted successfully.`);
           
           // Terminate device log capture process
           if (sharedState.deviceLogProcess) {
-            logToFile('[end_session] Terminating device log capture process.');
+            logToFile(`[end_session] Terminating ${platformName} log capture process.`);
             try {
               sharedState.deviceLogProcess.kill('SIGTERM'); 
             } catch (killError) {
-                logToFile('[end_session] Error terminating device log process:', killError.message);
+                logToFile(`[end_session] Error terminating ${platformName} log process:`, killError.message);
             }
             sharedState.deviceLogProcess = null;
-            logToFile('[end_session] Device log capture process terminated.');
+            logToFile(`[end_session] ${platformName} log capture process terminated.`);
           }
 
           return { content: [{ type: "text", text: "Appium session ended." }] };
         } catch (error) {
           logToFile('[end_session] Error ending Appium session:', error.message, error.stack);
           sharedState.appiumDriver = null; // Ensure driver is cleared even on error
+          sharedState.currentPlatform = null;
+          sharedState.currentDevice = null;
           
           // Ensure log process is also cleared if session end fails
           if (sharedState.deviceLogProcess) {

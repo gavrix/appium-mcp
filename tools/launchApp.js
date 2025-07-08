@@ -18,7 +18,9 @@
 
 /**
  * Creates the definition for the "launch_app" tool.
- * Launches an application on the active Appium session using its bundle ID.
+ * Launches an application on the active Appium session using its identifier.
+ * For iOS: use bundle ID (e.g., 'com.apple.mobilesafari')
+ * For Android: use package name (e.g., 'com.android.chrome')
  * If the app is already running, it will be terminated and then relaunched.
  *
  * @param {SharedState} sharedState - An object to manage shared state like appiumDriver.
@@ -30,9 +32,9 @@ export function createLaunchAppTool(sharedState, dependencies) {
 
   return {
     name: "launch_app",
-    description: "Launches an application on the active Appium session using its bundle ID. If the app is already running, it will be terminated and then relaunched.",
+    description: "Launches an application on the active Appium session using its identifier. For iOS use bundle ID (e.g., 'com.apple.mobilesafari'), for Android use package name (e.g., 'com.android.chrome'). If the app is already running, it will be terminated and then relaunched.",
     schema: { 
-      bundleId: z.string().describe("The bundle identifier of the app to launch (e.g., 'com.apple.mobilesafari')") 
+      bundleId: z.string().describe("The app identifier: bundle ID for iOS (e.g., 'com.apple.mobilesafari') or package name for Android (e.g., 'com.android.chrome')") 
     },
     handler: async ({ bundleId }) => {
       if (!sharedState.appiumDriver) {

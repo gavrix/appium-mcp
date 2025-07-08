@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/%40gavrix%2Fappium-mcp.svg)](https://badge.fury.io/js/%40gavrix%2Fappium-mcp)
 
-An Appium MCP (Model-Context-Protocol) server that exposes mobile automation capabilities (iOS simulators, with potential Android support) as tools for MCP clients. Enables standardized control and interaction with mobile devices.
+An Appium MCP (Model-Context-Protocol) server that exposes mobile automation capabilities for both iOS simulators and Android emulators/devices as tools for MCP clients. Enables standardized control and interaction with mobile devices.
 
 This server acts as a bridge, allowing an MCP client (like a Large Language Model or an automation script) to interact with mobile applications through Appium.
 
@@ -10,7 +10,7 @@ This server acts as a bridge, allowing an MCP client (like a Large Language Mode
 
 The primary goal of this project is to provide a set of callable tools over the Model Context Protocol. These tools abstract Appium's functionalities for mobile application testing and automation.
 
-Currently, the server primarily targets iOS simulators, with plans to expand to Android devices.
+The server supports both iOS simulators and Android emulators/devices with automatic device detection and platform-specific optimizations.
 
 The server is designed to be run via `npx` for ease of use.
 
@@ -54,18 +54,43 @@ If you are configuring an MCP client (like Cursor) to use this server, you would
 
 The server exposes the following tools to an MCP client:
 
-*   `start_session`: Starts an Appium session with an automatically detected booted iOS simulator.
-*   `launch_app`: Launches an application on the active Appium session using its bundle ID.
+*   `start_session`: Starts an Appium session with an automatically detected device (iOS simulator or Android emulator/device). Supports platform selection and device targeting.
+*   `launch_app`: Launches an application using its identifier (bundle ID for iOS, package name for Android).
 *   `get_page_source`: Retrieves the XML source hierarchy of the current screen.
 *   `find_element`: Finds a UI element on the current screen using a specified strategy and selector.
 *   `tap_element`: Taps or clicks an element identified by its unique element ID.
+*   `enter_text`: Enters text into a specific element, like an input field.
+*   `get_element_text`: Gets the text from an element.
 *   `get_screenshot`: Captures a screenshot of the current screen.
 *   `get_device_logs`: Retrieves console logs from the connected device/simulator.
 *   `simulate_gesture`: Simulates a custom gesture on the device.
 *   `end_session`: Ends the current Appium session.
 
+### Platform-Specific Features
+
+**iOS Support:**
+- Automatic detection of booted iOS simulators
+- iOS-specific log capture using `xcrun simctl`
+- Support for iOS-specific element finding strategies (`-ios class chain`, `-ios predicate string`)
+
+**Android Support:**
+- Automatic detection of connected Android devices and emulators
+- Android logcat capture
+- Support for Android-specific element finding strategies (`-android uiautomator`)
+
 Refer to the tool definitions within the MCP client or the server's source code (`tools/` directory) for detailed schemas and descriptions of each tool.
 
+## Prerequisites
+
+### For iOS Support
+- macOS with Xcode and Xcode command line tools installed
+- iOS Simulator running
+- Appium server running on port 4723
+
+### For Android Support
+- Android SDK with ADB installed and available in PATH
+- Android emulator running or physical device connected
+- Appium server running on port 4723
 
 ## Contributing
 

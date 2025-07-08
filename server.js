@@ -51,6 +51,7 @@ let appiumDriver = null; // To store the Appium driver session
 // Global variables for device log capturing, managed via sharedState
 let deviceLogProcess = null;
 const deviceLogFilePath = path.join(__dirname_esm, 'device_console.log');
+const androidLogFilePath = path.join(__dirname_esm, 'android_logcat.log');
 
 // Helper to parse iOS version from runtime string (e.g., com.apple.CoreSimulator.SimRuntime.iOS-17-2)
 function parseIOSVersion(runtimeString) {
@@ -66,6 +67,65 @@ function parseIOSVersion(runtimeString) {
   return null;
 }
 
+// Helper to parse Android API level to version name
+function parseAndroidVersion(apiLevel) {
+  if (!apiLevel) return null;
+  const apiLevelNum = parseInt(apiLevel, 10);
+  // Common Android API level mappings
+  const versionMap = {
+    34: '14.0', 33: '13.0', 32: '12.1', 31: '12.0', 30: '11.0',
+    29: '10.0', 28: '9.0', 27: '8.1', 26: '8.0', 25: '7.1',
+    24: '7.0', 23: '6.0', 22: '5.1', 21: '5.0'
+  };
+  return versionMap[apiLevelNum] || apiLevel;
+}
+
+// Helper to detect Android devices/emulators
+async function detectAndroidDevices() {
+  try {
+    const { stdout } = await execAsync('adb devices -l');
+    const lines = stdout.split('\n').filter(line => line.trim() && !line.includes('List of devices'));
+    
+    const devices = [];
+    for (const line of lines) {
+      const parts = line.split(/\s+/);
+      if (parts.length >= 2 && parts[1] === 'device') {
+        const deviceId = parts[0];
+        
+        try {
+          // Get device properties
+          const { stdout: propOutput } = await execAsync(`adb -s ${deviceId} shell getprop ro.product.model`);
+          const { stdout: apiOutput } = await execAsync(`adb -s ${deviceId} shell getprop ro.build.version.sdk`);
+          
+          const deviceName = propOutput.trim() || 'Unknown Android Device';
+          const apiLevel = apiOutput.trim();
+          const androidVersion = parseAndroidVersion(apiLevel);
+          
+          devices.push({
+            id: deviceId,
+            name: deviceName,
+            apiLevel: apiLevel,
+            version: androidVersion,
+            type: deviceId.includes('emulator') ? 'emulator' : 'device'
+          });
+        } catch (propError) {
+          // If we can't get properties, still include the device
+          devices.push({
+            id: deviceId,
+            name: 'Unknown Android Device',
+            apiLevel: 'unknown',
+            version: 'unknown',
+            type: deviceId.includes('emulator') ? 'emulator' : 'device'
+          });
+        }
+      }
+    }
+    return devices;
+  } catch (error) {
+    return []; // Return empty array if ADB not available
+  }
+}
+
 async function main() {
   const server = new McpServer({
     name: "appium-mcp-server",
@@ -78,6 +138,8 @@ async function main() {
   const sharedState = {
     appiumDriver: null,
     deviceLogProcess: null,
+    currentPlatform: null,  // 'ios' | 'android' | null
+    currentDevice: null,    // Device info object
   };
 
   /**
@@ -87,8 +149,11 @@ async function main() {
     logToFile,
     execAsync,
     parseIOSVersion,
+    parseAndroidVersion,
+    detectAndroidDevices,
     fsPromises,
     deviceLogFilePath,
+    androidLogFilePath,
     path,
     spawn,
     zod: z, // Pass the imported z instance
