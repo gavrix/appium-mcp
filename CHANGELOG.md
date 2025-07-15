@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-15
+
+### Added
+- **`press_home_button` Tool**: Simulates pressing the home button on both iOS and Android devices
+  - iOS: Uses `mobile: pressButton` command
+  - Android: Uses `pressKeyCode(3)` for HOME key
+  - Sends apps to background without ending the session
+
+- **Enhanced `simulate_gesture` Tool**: Now uses normalized coordinates for better cross-device compatibility
+  - Coordinates are specified as values between 0.0 and 1.0
+  - Automatically scales to device screen dimensions
+  - Makes gestures portable across different screen sizes
+
+- **CLAUDE.md Documentation**: Comprehensive context document for AI agents
+  - Project structure and architecture details
+  - Tool descriptions and usage patterns
+  - Development guidelines and best practices
+
+### Changed
+- Improved gesture simulation to be more intuitive and device-agnostic
+
 ## [0.2.0] - 2025-01-15
 
 ### Added

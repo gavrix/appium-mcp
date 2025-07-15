@@ -1,6 +1,6 @@
 {
   "name": "@gavrix/appium-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "An Appium MCP (Model-Context-Protocol) server that exposes mobile automation capabilities for both iOS simulators and Android emulators/devices as tools for MCP clients. Enables standardized control and interaction with mobile devices.",
   "author": "Sergey Gavrilyuk <sergey.gavrilyuk@gmail.com>",
   "license": "ISC",

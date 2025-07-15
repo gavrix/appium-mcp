@@ -76,7 +76,8 @@ The server exposes the following tools to an MCP client:
 *   `get_screenshot_file`: Captures a screenshot and saves it to a specified file path.
 
 ### Device Interaction
-*   `simulate_gesture`: Simulates custom gestures using W3C WebDriver Actions API.
+*   `simulate_gesture`: Simulates custom gestures using W3C WebDriver Actions API with normalized coordinates (0.0-1.0).
+*   `press_home_button`: Simulates pressing the home button to send apps to background (iOS and Android).
 *   `get_device_logs`: Retrieves console logs from the connected device/simulator.
 
 ### Platform-Specific Features
