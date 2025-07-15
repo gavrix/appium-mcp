@@ -54,17 +54,30 @@ If you are configuring an MCP client (like Cursor) to use this server, you would
 
 The server exposes the following tools to an MCP client:
 
+### Session Management
 *   `start_session`: Starts an Appium session with an automatically detected device (iOS simulator or Android emulator/device). Supports platform selection and device targeting.
+    - Parameters: `platform` (optional): 'ios', 'android', or 'auto' (default)
+    - Parameters: `deviceName` (optional): specific device name to target
+*   `end_session`: Ends the current Appium session and cleans up resources.
+
+### App Control
 *   `launch_app`: Launches an application using its identifier (bundle ID for iOS, package name for Android).
-*   `get_page_source`: Retrieves the XML source hierarchy of the current screen.
+
+### Element Interaction
 *   `find_element`: Finds a UI element on the current screen using a specified strategy and selector.
 *   `tap_element`: Taps or clicks an element identified by its unique element ID.
 *   `enter_text`: Enters text into a specific element, like an input field.
-*   `get_element_text`: Gets the text from an element.
-*   `get_screenshot`: Captures a screenshot of the current screen.
+*   `get_element_text`: Gets the text content from an element.
+
+### Screen Capture & Analysis
+*   `get_page_source`: Retrieves the XML source hierarchy of the current screen.
+*   `get_page_source_file`: Saves the page source XML to a specified file path.
+*   `get_screenshot`: Captures a screenshot and returns it as base64-encoded data.
+*   `get_screenshot_file`: Captures a screenshot and saves it to a specified file path.
+
+### Device Interaction
+*   `simulate_gesture`: Simulates custom gestures using W3C WebDriver Actions API.
 *   `get_device_logs`: Retrieves console logs from the connected device/simulator.
-*   `simulate_gesture`: Simulates a custom gesture on the device.
-*   `end_session`: Ends the current Appium session.
 
 ### Platform-Specific Features
 
